@@ -1,0 +1,46 @@
+version: '2'
+services:
+    postfix:
+        build: mailserver/postfix
+        env_file: env
+        volumes:
+            - ./cert:/cert
+            - dovecot-sasl:/var/spool/postfix/private/dovecot
+            - amavis:/var/amavis/sock
+            - postfix:/var/spool/postfix/public/
+        ports:
+            - "25:25"
+            - 465:465
+            - 587:587
+        restart: unless-stopped
+    dovecot:
+        build: mailserver/dovecot
+        env_file: env
+        ports:
+            - 993:993
+            - 4190:4190
+            - 5190:5190
+        volumes:
+            - dovecot-sasl:/var/spool/postfix/private/dovecot
+            - mail:/home
+            - postfix:/postfix
+            - ./cert:/cert
+            - ./sieve:/sieve
+        restart: unless-stopped
+    amavis:
+        build: mailserver/amavis
+        env_file: env
+        volumes:
+            - amavis:/var/amavis/sock
+            - postfix:/var/spool/postfix/public/
+            - clamav:/var/lib/clamav/
+            - spamdb:/var/lib/spamassassin
+            - ./dkim:/dkim
+        restart: unless-stopped
+volumes:
+    dovecot-sasl: {}
+    amavis: {}
+    clamav: {}
+    spamdb: {}
+    mail: {}
+    postfix: {}
